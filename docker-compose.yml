@@ -1,0 +1,50 @@
+version: '3'
+services:
+  revers-proxy:
+    image: nginx:1.17.10
+    container_name: revers_proxy
+    depends_on:
+     - web_server
+    volumes:
+     - ./nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+     - ./nginx/html:/usr/share/nginx/html
+    ports:
+     - 80:80
+     
+  db:
+    image: mysql:5.7
+    restart: always
+    volumes: 
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/db_data:/var/lib/mysql 
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: text
+      MYSQL_USER: User
+      MYSQL_PASSWORD: 123456789
+
+  web_server:
+    build:
+      context: .
+      dockerfile: ./project/project/Dockerfile
+    volumes:
+      - ./project:/var/www/html/
+    restart: always
+    links:
+      - api_server
+
+
+  api_server:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile
+    volumes:
+    - ./api:/var/www/html
+    ports:
+      - 8001:80
+    restart: always
+    links:
+      - db
+
+volumes:
+  db_data:
